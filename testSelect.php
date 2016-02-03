@@ -1,7 +1,7 @@
 <?php 
     require_once('../data/kreang_connection.php');
     if ( $conn = Connection::databaseConnect() ) {
-        $select_sql = "SELECT cpa.PAYMENT_DATE, cpa.RECEIPT_NO, c.CLIENT_NO, c.FIRST_NAME_EN, c.MIDDLE_NAME_EN, c.LAST_NAME_EN, gn.NAME as `group_name`, rct.NAME_EN as `course type`, cos.NAME as `course name` FROM client_payment_amount as cpa INNER JOIN client AS c ON  cpa.CLIENT_ID = c.ID INNER JOIN client_payment as cp ON cpa.CLIENT_PAYMENT_ID = cp.ID INNER JOIN group_name as gn ON cp.GROUP_ID = gn.ID INNER JOIN ref_course_type as rct ON rct.ID = gn.COURSE_TYPE_ID INNER JOIN course as cos ON cos.ID = gn.COURSE_ID";
+        $select_sql = "SELECT cpa.PAYMENT_DATE, cpa.RECEIPT_NO, c.CLIENT_NO, c.FIRST_NAME_EN, c.MIDDLE_NAME_EN, c.LAST_NAME_EN, gn.NAME as `group_name`, rct.NAME_EN as `course type`, cos.NAME as `course name`, gn.START_DATE as `Period from`, gn.END_DATE as `Period to`, rcoslv.NAME_EN as `level`, cos.LESSON_TOTAL as `lesson`, cpa.PAYMENT_PRICE as `amount`, stk.NAME_EN as `Name Book`, stk.PRICE as `amount` FROM client_payment_amount as cpa  INNER JOIN client AS c ON  cpa.CLIENT_ID = c.ID  INNER JOIN client_payment as cp ON cpa.CLIENT_PAYMENT_ID = cp.ID  INNER JOIN group_name as gn ON cp.GROUP_ID = gn.ID  INNER JOIN ref_course_type as rct ON rct.ID = gn.COURSE_TYPE_ID  INNER JOIN course as cos ON cos.ID = gn.COURSE_ID  INNER JOIN ref_course_level as rcoslv ON rcoslv.ID = cos.COURSE_LEVEL_ID INNER JOIN client_payment_stock as cps ON cp.id = cps.CLIENT_PAYMENT_ID INNER JOIN stock as stk on cps.STOCK_ID = stk.ID";
         if ($stmt = $conn -> prepare($select_sql)) {
              $first_name_en = 'Achiraya';
 //            if($stmt->bind_param('s', $first_name_en)){
