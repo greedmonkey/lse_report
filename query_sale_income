@@ -1,13 +1,16 @@
-SELECT cpa.PAYMENT_DATE, cpa.RECEIPT_NO, c.CLIENT_NO, c.PREFIX_NAME, c.FIRST_NAME_EN, c.MIDDLE_NAME_EN, c.LAST_NAME_EN, gn.NAME as `group_name`, rct.NAME_EN as `course type`, cos.NAME as `course name`, gn.START_DATE as `Period from`, gn.END_DATE as `Period to`, rcoslv.NAME_EN as `level`, cos.LESSON_TOTAL as `lesson`, cpa.PAYMENT_PRICE as `amount`, stk.NAME_EN as `Name Book`, stk.PRICE as `amount`, (cpa.PAYMENT_PRICE + stk.PRICE) as `grand total`, rpt.NAME_EN as `Type of Payment`,  CONCAT(emp.PREFIX_NAME,emp.FIRST_NAME_EN, emp.MIDDLE_NAME_EN, emp.LAST_NAME_EN) as `Consultan Name`
+SELECT cpa.PAYMENT_DATE, cpa.RECEIPT_NO, c.CLIENT_NO, CONCAT(c.PREFIX_NAME, c.FIRST_NAME_EN,' ',c.LAST_NAME_EN) as `Name`, gn.NAME as `group_name`, rct.NAME_EN as `course type`, cos.NAME as `course name`, gn.START_DATE as `Period from`, gn.END_DATE as `Period to`, rcoslv.NAME_EN as `level`, cos.LESSON_TOTAL as `lesson`, cpa.PAYMENT_PRICE as `amount`, stk.NAME_EN as `Name Book`, stk.PRICE as `amount`, (cpa.PAYMENT_PRICE + stk.PRICE) as `grand total`, rpt.NAME_EN as `Type of Payment`,  CONCAT(emp.PREFIX_NAME,emp.FIRST_NAME_EN, emp.MIDDLE_NAME_EN, emp.LAST_NAME_EN) as `Consultan Name`, pro.NAME_EN as `Promotion`, rcc.NAME_EN as `Contact Channel`, rms.NAME_EN as `Marketing Source`
 FROM client_payment_amount as cpa 
 INNER JOIN client AS c ON  cpa.CLIENT_ID = c.ID 
-INNER JOIN client_payment as cp ON cpa.CLIENT_PAYMENT_ID = cp.ID 
-INNER JOIN group_name as gn ON cp.GROUP_ID = gn.ID 
-INNER JOIN ref_course_type as rct ON rct.ID = gn.COURSE_TYPE_ID 
-INNER JOIN course as cos ON cos.ID = gn.COURSE_ID 
-INNER JOIN ref_course_level as rcoslv ON rcoslv.ID = cos.COURSE_LEVEL_ID
-INNER JOIN client_payment_stock as cps ON cp.id = cps.CLIENT_PAYMENT_ID
+LEFT JOIN client_payment as cp ON cpa.CLIENT_PAYMENT_ID = cp.ID 
+LEFT JOIN group_name as gn ON cp.GROUP_ID = gn.ID 
+LEFT JOIN ref_course_type as rct ON rct.ID = gn.COURSE_TYPE_ID 
+LEFT JOIN course as cos ON cos.ID = gn.COURSE_ID 
+LEFT JOIN ref_course_level as rcoslv ON rcoslv.ID = cos.COURSE_LEVEL_ID
+LEFT JOIN client_payment_stock as cps ON cp.id = cps.CLIENT_PAYMENT_ID
 INNER JOIN stock as stk on cps.STOCK_ID = stk.ID
-INNER JOIN ref_payment_type as rpt ON rpt.ID = cpa.ID
-INNER JOIN employee as emp ON emp.ID = gn.TRAINER_ID
-INNER JOIN client_payment_promotion as cpp ON cpp.CLIENT_PAYMENT_ID = cp.ID
+LEFT JOIN ref_payment_type as rpt ON rpt.ID = cpa.ID
+LEFT JOIN employee as emp ON emp.ID = gn.TRAINER_ID
+LEFT JOIN ref_contact_channel as rcc ON rcc.ID = c.CONTACT_CHANNEL_ID
+LEFT JOIN ref_marketing_source as rms ON rms.ID = c.MARKETING_SOURCE_ID
+LEFT JOIN client_payment_promotion as cpp ON cp.ID = cpp.CLIENT_PAYMENT_ID
+LEFT JOIN promotion as pro ON pro.ID = cpp.PROMOTION_ID
