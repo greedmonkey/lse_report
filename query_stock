@@ -1,0 +1,6 @@
+SELECT cp.ID, cps.CLIENT_PAYMENT_ID, CONCAT(cps.items,'x ', stk.NAME_EN) as `Book`
+FROM client_payment as cp
+INNER JOIN (SELECT cps2.CLIENT_PAYMENT_ID, cps2.STOCK_ID, COUNT(cps2.STOCK_ID) as items
+			FROM client_payment_stock as cps2
+			GROUP BY cps.CLIENT_PAYMENT_ID) as cps ON cps.CLIENT_PAYMENT_ID = cp.ID
+LEFT JOIN stock as stk ON stk.ID = cps.STOCK_ID
