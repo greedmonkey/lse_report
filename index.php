@@ -93,8 +93,8 @@ require_once('../template/page_header.php');
                 <div class="col-lg-10 col-md-12 col-xs-12">
                     <hr/>
                     <p>
-                        <?php require_once('testSelect.php'); ?>
-                        <!-- <a href="testSelect.php" >sale income</a> -->
+                        <?php //require_once('defer_income.php'); ?>
+                         <a href="defer_income.php" >sale income</a>
                     </p>
                     <p>
                         <a href="#">Example of Report 1 (put it in report folder)</a>
