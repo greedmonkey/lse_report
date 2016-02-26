@@ -29,23 +29,42 @@ cpa.RECEIPT_NO
 ORDER BY
 cpa.RECEIPT_NO ASC ";
     $sql2 = "SELECT
-client_payment_amount.RECEIPT_NO,
-Count(classroom_book.ID) AS CLASS_PER_MONTH,
-classroom_book.GROUP_ID,
-YEAR(classroom_book.DATE),
-MONTH(classroom_book.DATE)
+CPA.RECEIPT_NO,
+Count(CB.ID) AS CLASS_PER_MONTH,
+YEAR(CB.DATE),
+MONTH(CB.DATE),
+CB.GROUP_ID
 FROM
-client_payment_amount
-INNER JOIN client ON client_payment_amount.CLIENT_ID = client.ID
-INNER JOIN group_register ON group_register.CLIENT_ID = client.ID
-INNER JOIN classroom_book ON classroom_book.GROUP_ID = group_register.GROUP_ID
+client_payment_amount AS CPA
+LEFT JOIN client AS C ON CPA.CLIENT_ID = C.ID
+LEFT JOIN group_register AS GR ON GR.CLIENT_ID = C.ID
+LEFT JOIN group_name AS GN ON GR.GROUP_ID = GN.ID
+LEFT JOIN classroom_book AS CB ON CB.GROUP_ID = GN.ID
 GROUP BY
-classroom_book.GROUP_ID,
-YEAR(classroom_book.DATE),
-MONTH(classroom_book.DATE)
+CPA.RECEIPT_NO,
+CB.GROUP_ID,
+YEAR(CB.DATE),
+MONTH(CB.DATE)
 ORDER BY
-client_payment_amount.RECEIPT_NO,
-classroom_book.DATE";
+CPA.RECEIPT_NO ASC
+";
+    $sql3 = "SELECT DISTINCT
+CONCAT(MONTH(CB.DATE),'_',YEAR(CB.DATE)),
+MONTH(CB.DATE),
+YEAR(CB.DATE)
+FROM
+client_payment_amount AS CPA
+LEFT JOIN client AS C ON CPA.CLIENT_ID = C.	ID
+LEFT JOIN group_register AS GR ON GR.CLIENT_ID = C.ID
+LEFT JOIN group_name AS GN ON GR.GROUP_ID = GN.ID
+INNER JOIN classroom_book AS CB ON CB.GROUP_ID = GN.ID
+GROUP BY
+CPA.RECEIPT_NO,
+CB.GROUP_ID,
+YEAR(CB.DATE),
+MONTH(CB.DATE)
+ORDER BY
+CB.DATE";
 //    if ($stmt = $conn -> query($select_sql)) {
     if(true){
         $first_name_en = 'Achiraya';
@@ -58,8 +77,9 @@ classroom_book.DATE";
 
                 $result = mysqli_query($conn, $sql1);
                 $result2 = mysqli_query($conn,$sql2);
+                $result3 = mysqli_query($conn,$sql3);
 //                print_r($result);
-//                print_r($result2);
+//                print_r($result3);
 //                exit;
                 require_once('../assets/plugins/PHPExcel/Classes/PHPExcel.php');
                 /*$result = $stmt->get_result();
@@ -90,6 +110,7 @@ classroom_book.DATE";
                 //mergeColumn
                 $objPHPExcel->getActiveSheet()->mergeCells('E1:G1');
                 $objPHPExcel->getActiveSheet()->mergeCells('I1:J1');
+                $objPHPExcel->getActiveSheet()->mergeCells('N1:O1');
 
                 $objPHPExcel->getActiveSheet()->SetCellValue('A'.$rowCount,'No.');
                 $objPHPExcel->getActiveSheet()->SetCellValue('B'.$rowCount,'Group Name');
@@ -106,7 +127,45 @@ classroom_book.DATE";
                 $objPHPExcel->getActiveSheet()->SetCellValue('K'.$rowCount,'Amount');
                 $objPHPExcel->getActiveSheet()->SetCellValue('L'.$rowCount,'Lesson');
                 $objPHPExcel->getActiveSheet()->SetCellValue('M'.$rowCount,'Bath/Lesson');
+                $objPHPExcel->getActiveSheet()->SetCellValue('N'.$rowCount,'Bought Forward');
                 $rowCount++;
+                $objPHPExcel->getActiveSheet()->SetCellValue('N'.$rowCount,'Lesson');
+                $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount,'Bath');
+                $monthAry = ['N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM'];
+                $colN = 15;
+                $arrX = [];
+//                print_r($result3->num_rows);
+//                exit;
+                while($row_data = $result3->fetch_array(MYSQLI_NUM)) {
+                    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 1, $row_data[1]);
+                    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, 1, $row_data[2]);
+                    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 2, 'Lesson');
+                    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, 2, 'Bath');
+                    $arrX[$row_data[0]]=$monthAry[$colN-13];
+                    $arrX[$row_data[0].'_2']=$monthAry[$colN-13+1];
+                    $colN++;
+                    $colN++;
+                }
+
+//                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 1, $row_data[1]);
+//                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, 1, $row_data[2]);
+
+                $str = $monthAry[$colN-13].'1:'.$monthAry[$colN-13+1].'1';
+                $objPHPExcel->getActiveSheet()->mergeCells($str);
+                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 1, 'Selected Month');
+//                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 1, $row_data[1]);
+                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 2, 'Lesson');
+                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, 2, 'Bath');
+                $colN++;
+                $colN++;
+                $str = $monthAry[$colN-13].'1:'.$monthAry[$colN-13+1].'1';
+                $objPHPExcel->getActiveSheet()->mergeCells($str);
+                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 1, 'Remaining');
+                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 2, 'Lesson');
+                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, 2, 'Bath');
+//                print_r($arrX);
+//                exit;
+                $dateX = date('n_Y');
                 while($row = $result->fetch_array(MYSQLI_NUM)){
                     $rowCount++;
                     $objPHPExcel->getActiveSheet()->SetCellValue('A'.$rowCount, $rowNum);
@@ -122,23 +181,38 @@ classroom_book.DATE";
                     $objPHPExcel->getActiveSheet()->SetCellValue('K'.$rowCount,$row['7']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('L'.$rowCount,$row['8']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('M'.$rowCount,$row['9']);
-                    $monthAry = ['N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM'];
+
                     $monthLoop = 0;
+                    $flagRemain = false;
+                    $sumLesson=0;$sumAmount=0;
+                    $sumBoughtLesson=0;$sumBoughtAmount=0;
                     while($row2 = $result2->fetch_array(MYSQLI_NUM)) {
-
-                        if($row2['0']==$row['6']&&$row2['2']==$row['10']){
-                            $objPHPExcel->getActiveSheet()->SetCellValue($monthAry[$monthLoop].$rowCount,$row2['1']);
-                            $objPHPExcel->getActiveSheet()->SetCellValue($monthAry[$monthLoop+1].$rowCount,($row['9']*$row2['1']));
-                            $monthLoop++;
-                            $monthLoop++;
+                        if($row2['0']==$row['6']&&$row2['4']==$row['10']){
+                            $objPHPExcel->getActiveSheet()->SetCellValue($arrX[$row2['3'].'_'.$row2['2']].$rowCount,$row2['1']);
+                            $objPHPExcel->getActiveSheet()->SetCellValue($arrX[$row2['3'].'_'.$row2['2'].'_2'].$rowCount,($row['9']*$row2['1']));
+                            if($dateX==$row2['3'].'_'.$row2['2']){
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-2, $rowCount, $row2['1']);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1-2, $rowCount, ($row['9']*$row2['1']));
+                                $flagRemain = true;
+                            }
+                            if($flagRemain){
+                                $sumLesson+=$row2['1'];
+                                $sumAmount+=($row['9']*$row2['1']);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, $rowCount, $sumLesson);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, $rowCount, $sumAmount);
+                            }else{
+                                $sumBoughtLesson+=$row2['1'];
+                                $sumBoughtAmount+=($row['9']*$row2['1']);
+                                $objPHPExcel->getActiveSheet()->SetCellValue('N'.$rowCount, $sumBoughtLesson);
+                                $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount, $sumBoughtAmount);
+                            }
                         }
-
                     }
                     mysqli_data_seek($result2, 0);
                     $rowNum++;
                 }
 
-                foreach(range('A','M') as $columnID) {
+                foreach(range('A','Z') as $columnID) {
                     $objPHPExcel->getActiveSheet()->getColumnDimension($columnID)
                         ->setAutoSize(true);
                 }
