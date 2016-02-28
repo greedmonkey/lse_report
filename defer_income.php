@@ -4,6 +4,35 @@ require_once('../data/kreang_connection.php');
 //if ( $conn = Connection::databaseConnect() ) {
 if(true){
     $conn = Connection::databaseConnect();
+    $sql1_1 = "SELECT DISTINCT
+Count(cpa.RECEIPT_NO) AS `Refs No.`,
+gn.`NAME` AS `Group Name`,
+rct.NAME_EN AS `Course Type`,
+cos.`NAME` AS `Course Name`,
+CONCAT(gn.START_DATE,'-',gn.END_DATE) AS `start-finish`,
+GROUP_CONCAT(DAY(gs.DATE) SEPARATOR ', '),
+rcs.TIME,
+CONCAT(cli.PREFIX_NAME,cli.FIRST_NAME_EN,' ',cli.LAST_NAME_EN) AS `Student Name`,
+cpa.PAYMENT_DATE AS Date,
+cpa.RECEIPT_NO AS `Ref No.`,
+cpa.PAYMENT_PRICE AS Amount,
+gn.LESSON_TOTAL AS `Total Lesson`,
+(cpa.PAYMENT_PRICE/gn.LESSON_TOTAL) AS `Bath/Lesson`,
+gn.ID AS Group_ID
+FROM
+client_payment_amount AS cpa
+LEFT JOIN client AS cli ON cpa.CLIENT_ID = cli.ID
+LEFT JOIN group_register AS gr ON gr.CLIENT_ID = cli.ID
+LEFT JOIN group_name AS gn ON gr.GROUP_ID = gn.ID
+LEFT JOIN course AS cos ON gr.COURSE_ID = cos.ID
+INNER JOIN ref_course_type AS rct ON gr.COURSE_TYPE_ID = rct.ID
+LEFT JOIN classroom_book AS cosbook ON cosbook.GROUP_ID = gn.ID
+LEFT JOIN ref_classroom_schedule AS rcs ON cosbook.CLASSROOM_SCHEDULE_ID = rcs.ID
+LEFT JOIN group_schedule AS gs ON cosbook.GROUP_SCHEDULE_ID = gs.ID
+GROUP BY
+cpa.RECEIPT_NO
+ORDER BY
+cpa.RECEIPT_NO ASC";
     $sql1 = "SELECT DISTINCT
 Count(cpa.RECEIPT_NO) AS `Refs No.`,
 gn.`NAME` AS `Group Name`,
@@ -46,8 +75,7 @@ CB.GROUP_ID,
 YEAR(CB.DATE),
 MONTH(CB.DATE)
 ORDER BY
-CPA.RECEIPT_NO ASC
-";
+CPA.RECEIPT_NO ASC";
     $sql3 = "SELECT DISTINCT
 CONCAT(MONTH(CB.DATE),'_',YEAR(CB.DATE)),
 MONTH(CB.DATE),
@@ -78,9 +106,7 @@ CB.DATE";
                 $result = mysqli_query($conn, $sql1);
                 $result2 = mysqli_query($conn,$sql2);
                 $result3 = mysqli_query($conn,$sql3);
-//                print_r($result);
-//                print_r($result3);
-//                exit;
+
                 require_once('../assets/plugins/PHPExcel/Classes/PHPExcel.php');
                 /*$result = $stmt->get_result();
                 while ($row = $result->fetch_array(MYSQLI_NUM)) {
@@ -131,6 +157,53 @@ CB.DATE";
                 $rowCount++;
                 $objPHPExcel->getActiveSheet()->SetCellValue('N'.$rowCount,'Lesson');
                 $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount,'Bath');
+
+                $style = array(
+                    'alignment' => array(
+                        'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+                    ),
+                    'borders' => array(
+                        'allborders' => array(
+                            'style' => PHPExcel_Style_Border::BORDER_THIN
+                        )
+                    )
+                );
+                $styleArray = array(
+                    'borders' => array(
+                        'right' => array(
+                            'style' => PHPExcel_Style_Border::BORDER_THIN
+                        )
+                    )
+                );
+                $styleVer = array(
+                    'borders' => array(
+                        'vertical' => array(
+                            'style' => PHPExcel_Style_Border::BORDER_THIN
+                        )
+                    )
+                );
+                $boderBot= array(
+                    'borders' => array(
+                        'bottom' => array(
+                            'style' => PHPExcel_Style_Border::BORDER_THIN
+                        )
+                    )
+                );
+                $BStyle = array(
+                    'borders' => array(
+                        'vertical' => array(
+                            'style' => PHPExcel_Style_Border::BORDER_THIN
+                        )
+                    )
+                );
+
+                $objPHPExcel->getActiveSheet()->getStyle('A1:AM1')->getFont()->setBold(true);
+                $objPHPExcel->getActiveSheet()->getStyle('A2:AM2')->getFont()->setBold(true);
+                $objPHPExcel->getActiveSheet()->getStyle("A1:AM1")->applyFromArray($style);
+                $objPHPExcel->getActiveSheet()->getStyle("A2:AM2")->applyFromArray($style);
+                $objPHPExcel->getActiveSheet()->getStyle('N3:AM3')->applyFromArray($styleVer);
+
+
                 $monthAry = ['N','O','P','Q','R','S','T','U','V','W','X','Y','Z','AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM'];
                 $colN = 15;
                 $arrX = [];
@@ -168,7 +241,20 @@ CB.DATE";
                 $dateX = date('n_Y');
                 while($row = $result->fetch_array(MYSQLI_NUM)){
                     $rowCount++;
-                    $objPHPExcel->getActiveSheet()->SetCellValue('A'.$rowCount, $rowNum);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('A'.$rowCount, $rowNum)->getStyle('A'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('B'.$rowCount,$row['1'])->getStyle('B'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('C'.$rowCount,$row['2'])->getStyle('C'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('D'.$rowCount,$row['3'])->getStyle('D'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('E'.$rowCount,'')->getStyle('E'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('F'.$rowCount,'')->getStyle('F'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('G'.$rowCount,'')->getStyle('G'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('H'.$rowCount,$row['4'])->getStyle('H'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('I'.$rowCount,$row['5'])->getStyle('I'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('J'.$rowCount,$row['6'])->getStyle('J'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('K'.$rowCount,$row['7'])->getStyle('K'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('L'.$rowCount,$row['8'])->getStyle('L'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('M'.$rowCount,$row['9'])->getStyle('M'.$rowCount)->applyFromArray($styleArray);
+                    /*$objPHPExcel->getActiveSheet()->SetCellValue('A'.$rowCount, $rowNum);
                     $objPHPExcel->getActiveSheet()->SetCellValue('B'.$rowCount,$row['1']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('C'.$rowCount,$row['2']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('D'.$rowCount,$row['3']);
@@ -180,7 +266,7 @@ CB.DATE";
                     $objPHPExcel->getActiveSheet()->SetCellValue('J'.$rowCount,$row['6']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('K'.$rowCount,$row['7']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('L'.$rowCount,$row['8']);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('M'.$rowCount,$row['9']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('M'.$rowCount,$row['9']);*/
 
                     $monthLoop = 0;
                     $flagRemain = false;
@@ -193,6 +279,7 @@ CB.DATE";
                             if($dateX==$row2['3'].'_'.$row2['2']){
                                 $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-2, $rowCount, $row2['1']);
                                 $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1-2, $rowCount, ($row['9']*$row2['1']));
+//                                $objPHPExcel->getActiveSheet()->getStyle('A'.$rowCount)->applyFromArray($styleArray);
                                 $flagRemain = true;
                             }
                             if($flagRemain){
@@ -208,6 +295,8 @@ CB.DATE";
                             }
                         }
                     }
+                    $objPHPExcel->getActiveSheet()->getStyle('N'.$rowCount.':AM'.$rowCount)->applyFromArray($styleVer);
+                    $objPHPExcel->getActiveSheet()->getStyle('N'.$rowCount.':AM'.$rowCount)->applyFromArray($styleArray);
                     mysqli_data_seek($result2, 0);
                     $rowNum++;
                 }
@@ -216,6 +305,11 @@ CB.DATE";
                     $objPHPExcel->getActiveSheet()->getColumnDimension($columnID)
                         ->setAutoSize(true);
                 }
+                foreach(range('AA','AZ') as $columnID) {
+                    $objPHPExcel->getActiveSheet()->getColumnDimension($columnID)
+                        ->setAutoSize(true);
+                }
+                $objPHPExcel->getActiveSheet()->getStyle('A'.$rowCount.':AM'.$rowCount)->applyFromArray($boderBot);
 
                 // Redirect output to a client’s web browser (Excel5)
                 header('Content-Type: application/vnd.ms-excel');
@@ -240,4 +334,4 @@ CB.DATE";
 }else {
     echo $error_database_connection;
 }
-?>
+?>===

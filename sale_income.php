@@ -19,6 +19,7 @@ CP.TOTAL_LESSON AS LESSON,
 CP.COURSE_PRICE_TOTAL AS COURSE_PRICE_TOTAL,
 CPAD.DISCOUNT_PRICE AS EXTRA_DISCOUNT,
 CONCAT(ECPAD.PREFIX_NAME, ECPAD.FIRST_NAME_EN, ' ', ECPAD.LAST_NAME_EN ) AS EXTRA_DISCOUNT_BY_NAME,
+CONCAT(GROUP_CONCAT(DISTINCT s.NAME_EN SEPARATOR ', '),' x',SUM(CPS.STOCK_AMOUNT)) AS `TEST`,
 GROUP_CONCAT(S.NAME_EN SEPARATOR ', ') AS STOCK_NAME,
 Sum(CPS.STOCK_AMOUNT) AS STOCK_AMONT,
 Sum(CPS.STOCK_PRICE_TOTAL) AS STOCK_PRICE_TOTAL,
@@ -29,7 +30,8 @@ GROUP_CONCAT(PRO.NAME_EN SEPARATOR ', ') AS PROMOTION_NAME,
 CC.NAME_EN AS CONTACT_CHANNEL,
 C.CONTACT_CHANNEL_DETAIL,
 MS.NAME_EN AS MARKETING_SOURCE,
-C.MARKETING_SOURCE_DETAIL
+C.MARKETING_SOURCE_DETAIL,
+rct.NAME_EN AS Location
 FROM CLIENT_PAYMENT_AMOUNT CPA
 INNER JOIN CLIENT C ON C.ID = CPA.CLIENT_ID
 INNER JOIN EMPLOYEE E ON C.SALES_ID = E.ID
@@ -47,7 +49,44 @@ LEFT JOIN CLIENT_PAYMENT_ADDITION CPAD ON CP.ID = CPAD.CLIENT_PAYMENT_ID AND CPA
 LEFT JOIN EMPLOYEE ECPAD ON CPAD.MODIFY_BY = ECPAD.ID
 LEFT JOIN REF_CONTACT_CHANNEL CC ON C.CONTACT_CHANNEL_ID = CC.ID
 LEFT JOIN REF_MARKETING_SOURCE MS ON C.MARKETING_SOURCE_ID = MS.ID
+LEFT JOIN ref_course_type AS rct ON GN.COURSE_TYPE_ID = rct.ID
 GROUP BY CPA.ID";
+    $sql2 = "SELECT
+ccpa.PAYMENT_DATE AS `Date`,
+ccpa.RECEIPT_NO AS `No.`,
+cc.NAME_EN AS `Name`,
+gn.`NAME` AS `Group Name`,
+co.`NAME` AS `Course Name`,
+rct.NAME_EN AS `Course Type`,
+gn.START_DATE AS `Period From`,
+gn.END_DATE AS `Period To`,
+rcl.NAME_EN AS `Level`,
+ccp.TOTAL_LESSON AS Lesson,
+ccp.COURSE_PRICE_TOTAL AS Amount,
+GROUP_CONCAT(stk.NAME_EN SEPARATOR ' ,') AS `Book Name`,
+ccps.STOCK_AMOUNT,
+ccps.STOCK_PRICE_TOTAL AS Amount,
+ccps.STOCK_PRICE_PER_ITEM,
+ccp.TOTAL_PRICE AS `Grand Total`,
+ref_payment_type.NAME_EN AS TypeOfPayment,
+CONCAT(E.PREFIX_NAME, E.FIRST_NAME_EN, ' ', E.LAST_NAME_EN ) AS `Consult Name`,
+pro.NAME_EN AS Promotion,
+rct.NAME_EN AS Location
+FROM
+corporate_client_payment_amount AS ccpa
+LEFT JOIN corporate_client_payment AS ccp ON ccpa.CORPORATE_CLIENT_PAYMENT_ID = ccp.ID
+LEFT JOIN corporate_client AS cc ON ccpa.CORPORATE_CLIENT_ID = cc.ID
+LEFT JOIN group_name AS gn ON ccp.GROUP_ID = gn.ID
+LEFT JOIN course AS co ON gn.COURSE_ID = co.ID
+LEFT JOIN ref_course_type AS rct ON gn.COURSE_TYPE_ID = rct.ID
+LEFT JOIN ref_course_level AS rcl ON co.COURSE_LEVEL_ID = rcl.ID
+LEFT JOIN corporate_client_payment_stock AS ccps ON ccps.CORPORATE_CLIENT_PAYMENT_ID = ccp.ID
+LEFT JOIN stock AS stk ON ccps.STOCK_ID = stk.ID
+LEFT JOIN ref_payment_type ON ccpa.PAYMENT_TYPE_ID = ref_payment_type.ID
+LEFT JOIN employee AS E ON gn.TRAINER_ID = E.ID
+LEFT JOIN corporate_client_payment_promotion AS ccpp ON ccpp.CORPORATE_CLIENT_PAYMENT_ID = ccp.ID
+LEFT JOIN promotion AS pro ON ccpp.PROMOTION_ID = pro.ID
+GROUP BY ccpa.ID";
 //    if ($stmt = $conn -> query($select_sql)) {
     if(true){
         $first_name_en = 'Achiraya';
@@ -57,11 +96,8 @@ GROUP BY CPA.ID";
             if(true){
 //                $stmt2 = $conn -> prepare($sql2);
 //                $result = $conn->query($sql2);
-
                 $result = mysqli_query($conn, $sql1);
-//                print_r($result);
-//                print_r($result3);
-//                exit;
+                $result2 = mysqli_query($conn, $sql2);
                 require_once('../assets/plugins/PHPExcel/Classes/PHPExcel.php');
                 /*$result = $stmt->get_result();
                 while ($row = $result->fetch_array(MYSQLI_NUM)) {
@@ -120,7 +156,7 @@ GROUP BY CPA.ID";
                 $objPHPExcel->getActiveSheet()->SetCellValue('L'.$rowCount,'Level');
                 $objPHPExcel->getActiveSheet()->SetCellValue('M'.$rowCount,'Lesson');
                 $objPHPExcel->getActiveSheet()->SetCellValue('N'.$rowCount,'Amount (THB)');
-                $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount,'Name Book');
+                $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount,'Book Name');
                 $objPHPExcel->getActiveSheet()->SetCellValue('P'.$rowCount,'Amount (THB)');
                 $rowCount++;
 
@@ -138,8 +174,8 @@ GROUP BY CPA.ID";
                 while ($row = $result->fetch_array(MYSQLI_NUM)) {
                     $objPHPExcel->getActiveSheet()->SetCellValue('A'.$rowCount,$row['0']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('B'.$rowCount,$row['1']);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('C'.$rowCount,'');
-                    $objPHPExcel->getActiveSheet()->SetCellValue('D'.$rowCount,'');
+                    $objPHPExcel->getActiveSheet()->SetCellValue('C'.$rowCount,'Client');
+                    $objPHPExcel->getActiveSheet()->SetCellValue('D'.$rowCount,$row['26']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('E'.$rowCount,$row['2']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('F'.$rowCount,$row['3']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('G'.$rowCount,$row['4']);
@@ -150,15 +186,42 @@ GROUP BY CPA.ID";
                     $objPHPExcel->getActiveSheet()->SetCellValue('L'.$rowCount,$row['9']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('M'.$rowCount,$row['10']);
                     $objPHPExcel->getActiveSheet()->SetCellValue('N'.$rowCount,$row['11']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount,$row['14']);
+//                    $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount,$row['14'].' x '.$row['15']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('P'.$rowCount,$row['17']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('Q'.$rowCount,$row['18']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('R'.$rowCount,$row['19']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('S'.$rowCount,$row['20']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('T'.$rowCount,$row['21']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('U'.$rowCount,$row['22']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('V'.$rowCount,$row['24']);
+                    $rowCount++;
+                }
 
-                    $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount,$row['14'].' x '.$row['15']);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('P'.$rowCount,$row['16']);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('Q'.$rowCount,$row['17']);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('R'.$rowCount,$row['18']);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('S'.$rowCount,$row['19']);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('T'.$rowCount,$row['20']);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('U'.$rowCount,$row['21']);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('V'.$rowCount,$row['23']);
+                while ($row2 = $result2->fetch_array(MYSQLI_NUM)) {
+                    $objPHPExcel->getActiveSheet()->SetCellValue('A'.$rowCount,$row2['0']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('B'.$rowCount,$row2['1']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('C'.$rowCount,'Corporate');
+                    $objPHPExcel->getActiveSheet()->SetCellValue('D'.$rowCount,$row2['19']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('E'.$rowCount,'');
+                    $objPHPExcel->getActiveSheet()->SetCellValue('F'.$rowCount,$row2['2']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('G'.$rowCount,$row2['3']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('H'.$rowCount,$row2['4']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('I'.$rowCount,$row2['5']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('J'.$rowCount,$row2['6']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('K'.$rowCount,$row2['7']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('L'.$rowCount,$row2['8']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('M'.$rowCount,$row2['9']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('N'.$rowCount,$row2['10']);
+
+                    $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount,$row2['11'].' x '.$row2['12']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('P'.$rowCount,$row2['14']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('Q'.$rowCount,$row2['15']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('R'.$rowCount,$row2['16']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('S'.$rowCount,$row2['17']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('T'.$rowCount,$row2['18']);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('U'.$rowCount,'');
+                    $objPHPExcel->getActiveSheet()->SetCellValue('V'.$rowCount,'');
                     $rowCount++;
                 }
 
