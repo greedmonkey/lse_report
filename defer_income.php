@@ -4,21 +4,21 @@ require_once('../data/kreang_connection.php');
 //if ( $conn = Connection::databaseConnect() ) {
 if(true){
     $conn = Connection::databaseConnect();
-    $sql1_1 = "SELECT DISTINCT
+    $sql1 = "SELECT DISTINCT
 Count(cpa.RECEIPT_NO) AS `Refs No.`,
 gn.`NAME` AS `Group Name`,
 rct.NAME_EN AS `Course Type`,
 cos.`NAME` AS `Course Name`,
-CONCAT(gn.START_DATE,'-',gn.END_DATE) AS `start-finish`,
-GROUP_CONCAT(DAY(gs.DATE) SEPARATOR ', '),
-rcs.TIME,
 CONCAT(cli.PREFIX_NAME,cli.FIRST_NAME_EN,' ',cli.LAST_NAME_EN) AS `Student Name`,
-cpa.PAYMENT_DATE AS Date,
+DATE_FORMAT(cpa.PAYMENT_DATE,'%d/%m/%Y') AS `Date`,
 cpa.RECEIPT_NO AS `Ref No.`,
 cpa.PAYMENT_PRICE AS Amount,
 gn.LESSON_TOTAL AS `Total Lesson`,
 (cpa.PAYMENT_PRICE/gn.LESSON_TOTAL) AS `Bath/Lesson`,
-gn.ID AS Group_ID
+gn.ID AS Group_ID,
+CONCAT(DATE_FORMAT(gn.START_DATE,'%d/%m/%Y'),' - ',DATE_FORMAT(gn.END_DATE,'%d/%m/%Y')) AS `Start-Finish`,
+GROUP_CONCAT(DISTINCT DAYNAME(gs.DATE) SEPARATOR ', '),
+GROUP_CONCAT(DISTINCT rcs.TIME SEPARATOR ', ')
 FROM
 client_payment_amount AS cpa
 LEFT JOIN client AS cli ON cpa.CLIENT_ID = cli.ID
@@ -33,30 +33,6 @@ GROUP BY
 cpa.RECEIPT_NO
 ORDER BY
 cpa.RECEIPT_NO ASC";
-    $sql1 = "SELECT DISTINCT
-Count(cpa.RECEIPT_NO) AS `Refs No.`,
-gn.`NAME` AS `Group Name`,
-rct.NAME_EN AS `Course Type`,
-cos.`NAME` AS `Course Name`,
-CONCAT(cli.PREFIX_NAME,cli.FIRST_NAME_EN,' ',cli.LAST_NAME_EN) AS `Student Name`,
-cpa.PAYMENT_DATE AS Date,
-cpa.RECEIPT_NO AS `Ref No.`,
-cpa.PAYMENT_PRICE AS Amount,
-gn.LESSON_TOTAL AS `Total Lesson`,
-(cpa.PAYMENT_PRICE/gn.LESSON_TOTAL) AS `Bath/Lesson`,
-gn.ID AS Group_ID
-FROM
-client_payment_amount AS cpa
-LEFT JOIN client AS cli ON cpa.CLIENT_ID = cli.ID
-LEFT JOIN group_register AS gr ON gr.CLIENT_ID = cli.ID
-LEFT JOIN group_name AS gn ON gr.GROUP_ID = gn.ID
-LEFT JOIN course AS cos ON gr.COURSE_ID = cos.ID
-INNER JOIN ref_course_type AS rct ON gr.COURSE_TYPE_ID = rct.ID
-LEFT JOIN classroom_book AS cosbook ON cosbook.GROUP_ID = gn.ID
-GROUP BY
-cpa.RECEIPT_NO
-ORDER BY
-cpa.RECEIPT_NO ASC ";
     $sql2 = "SELECT
 CPA.RECEIPT_NO,
 Count(CB.ID) AS CLASS_PER_MONTH,
@@ -245,9 +221,9 @@ CB.DATE";
                     $objPHPExcel->getActiveSheet()->SetCellValue('B'.$rowCount,$row['1'])->getStyle('B'.$rowCount)->applyFromArray($styleArray);
                     $objPHPExcel->getActiveSheet()->SetCellValue('C'.$rowCount,$row['2'])->getStyle('C'.$rowCount)->applyFromArray($styleArray);
                     $objPHPExcel->getActiveSheet()->SetCellValue('D'.$rowCount,$row['3'])->getStyle('D'.$rowCount)->applyFromArray($styleArray);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('E'.$rowCount,'')->getStyle('E'.$rowCount)->applyFromArray($styleArray);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('F'.$rowCount,'')->getStyle('F'.$rowCount)->applyFromArray($styleArray);
-                    $objPHPExcel->getActiveSheet()->SetCellValue('G'.$rowCount,'')->getStyle('G'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('E'.$rowCount,$row['11'])->getStyle('E'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('F'.$rowCount,$row['12'])->getStyle('F'.$rowCount)->applyFromArray($styleArray);
+                    $objPHPExcel->getActiveSheet()->SetCellValue('G'.$rowCount,$row['13'])->getStyle('G'.$rowCount)->applyFromArray($styleArray);
                     $objPHPExcel->getActiveSheet()->SetCellValue('H'.$rowCount,$row['4'])->getStyle('H'.$rowCount)->applyFromArray($styleArray);
                     $objPHPExcel->getActiveSheet()->SetCellValue('I'.$rowCount,$row['5'])->getStyle('I'.$rowCount)->applyFromArray($styleArray);
                     $objPHPExcel->getActiveSheet()->SetCellValue('J'.$rowCount,$row['6'])->getStyle('J'.$rowCount)->applyFromArray($styleArray);
