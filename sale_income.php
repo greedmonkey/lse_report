@@ -1,6 +1,12 @@
 <?php
 require_once('../data/kreang_connection.php');
 
+$fromDate = new DateTime($_POST['fromDate']);
+$toDate = new DateTime($_POST['toDate']);
+//print_r($fromDate->format('Y-m-d 00:00:00'));
+//echo '</br>';
+//print_r($toDate->format('Y-m-d 23:59:59'));
+//exit;
 //if ( $conn = Connection::databaseConnect() ) {
 if(true){
     $conn = Connection::databaseConnect();
@@ -50,7 +56,8 @@ LEFT JOIN EMPLOYEE ECPAD ON CPAD.MODIFY_BY = ECPAD.ID
 LEFT JOIN REF_CONTACT_CHANNEL CC ON C.CONTACT_CHANNEL_ID = CC.ID
 LEFT JOIN REF_MARKETING_SOURCE MS ON C.MARKETING_SOURCE_ID = MS.ID
 LEFT JOIN ref_course_type AS rct ON GN.COURSE_TYPE_ID = rct.ID
-GROUP BY CPA.ID";
+WHERE CPA.PAYMENT_DATE BETWEEN '".$fromDate->format('Y-m-d 00:00:00')."' AND '".$toDate->format('Y-m-d 23:59:59')
+."' GROUP BY CPA.ID";
     $sql2 = "SELECT
 DATE_FORMAT(ccpa.PAYMENT_DATE,'%d/%m/%Y') AS `Date`,
 ccpa.RECEIPT_NO AS `No.`,
@@ -87,7 +94,10 @@ LEFT JOIN ref_payment_type ON ccpa.PAYMENT_TYPE_ID = ref_payment_type.ID
 LEFT JOIN employee AS E ON gn.TRAINER_ID = E.ID
 LEFT JOIN corporate_client_payment_promotion AS ccpp ON ccpp.CORPORATE_CLIENT_PAYMENT_ID = ccp.ID
 LEFT JOIN promotion AS pro ON ccpp.PROMOTION_ID = pro.ID
-GROUP BY ccpa.ID";
+WHERE ccpa.PAYMENT_DATE BETWEEN '".$fromDate->format('Y-m-d 00:00:00')."' AND '".$toDate->format('Y-m-d 23:59:59')
+."' GROUP BY ccpa.ID";
+//    print_r($sql2);
+//    exit;
 //    if ($stmt = $conn -> query($select_sql)) {
     if(true){
         $first_name_en = 'Achiraya';

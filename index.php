@@ -92,14 +92,30 @@ require_once('../template/page_header.php');
             <div class="form row">
                 <div class="col-lg-10 col-md-12 col-xs-12">
                     <hr/>
-                    <p>
-                        <?php //require_once('defer_income.php'); ?>
+                    <h1>Sale Income</h1>
+                    <form action="sale_income.php" method="post">
+                        From:
+                        <input type="date" name="fromDate">
+                        To:
+                        <input type="date" name="toDate">
+                        <input type="submit">
+                    </form>
+                    <h1>Defer Income</h1>
+                    <form action="defer_income.php" method="post">
+                        From:
+                        <input type="date" name="fromDate">
+                        To:
+                        <input type="date" name="toDate">
+                        <input type="submit">
+                    </form>
+                    <!--<p>
+                        <?php /*//require_once('defer_income.php'); */?>
                         <a href="sale_income.php" >sale income</a>
                         <a href="defer_income.php" >defer income</a>
-                    </p>
-                    <p>
+                    </p>-->
+                    <!--<p>
                         <a href="#">Example of Report 1 (put it in report folder)</a>
-                    </p>
+                    </p>-->
                 </div>
             </div>
             <?php
