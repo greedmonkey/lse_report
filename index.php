@@ -103,9 +103,9 @@ require_once('../template/page_header.php');
                     <h1>Defer Income</h1>
                     <form action="defer_income.php" method="post">
                         From:
-                        <input type="date" name="fromDate">
+                        <input type="month" name="fromDate">
                         To:
-                        <input type="date" name="toDate">
+                        <input type="month" name="toDate">
                         <input type="submit">
                     </form>
                     <!--<p>

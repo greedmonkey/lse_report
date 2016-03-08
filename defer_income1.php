@@ -4,23 +4,9 @@ require_once('../data/kreang_connection.php');
 $fromDate = new DateTime($_POST['fromDate']);
 $toDate = new DateTime($_POST['toDate']);
 
-//print_r(date_format($fromDate,'n_Y'));
-//print_r(date_format($toDate,'n_Y'));
-$date1 = '2015-01-01';
-$date2 = '2016-05-01';
+print_r(date_format($fromDate,'n_Y'));
+print_r(date_format($toDate,'n_Y'));
 
-$ts1 = strtotime($date1);
-$ts2 = strtotime($date2);
-
-$year1 = date('Y', $ts1);
-$year2 = date('Y', $ts2);
-
-$month1 = date('n', $ts1);
-$month2 = date('n', $ts2);
-
-$diff = (($year2 - $year1) * 12) + ($month2 - $month1);
-//var_dump($diff);
-//exit;
 //if ( $conn = Connection::databaseConnect() ) {
 if(true){
     $conn = Connection::databaseConnect();
@@ -50,7 +36,7 @@ LEFT JOIN classroom_book AS cosbook ON cosbook.GROUP_ID = gn.ID
 LEFT JOIN ref_classroom_schedule AS rcs ON cosbook.CLASSROOM_SCHEDULE_ID = rcs.ID
 LEFT JOIN group_schedule AS gs ON cosbook.GROUP_SCHEDULE_ID = gs.ID
 WHERE cpa.PAYMENT_DATE BETWEEN '".$fromDate->format('Y-m-d 00:00:00')."' AND '".$toDate->format('Y-m-d 23:59:59')
-."' GROUP BY
+        ."' GROUP BY
 cpa.RECEIPT_NO
 ORDER BY
 cpa.RECEIPT_NO ASC";
@@ -84,18 +70,18 @@ LEFT JOIN group_register AS GR ON GR.CLIENT_ID = C.ID
 LEFT JOIN group_name AS GN ON GR.GROUP_ID = GN.ID
 INNER JOIN classroom_book AS CB ON CB.GROUP_ID = GN.ID
 WHERE CPA.PAYMENT_DATE BETWEEN '".$fromDate->format('Y-m-d 00:00:00')."' AND '".$toDate->format('Y-m-d 23:59:59')
-."' GROUP BY
+        ."' GROUP BY
 CPA.RECEIPT_NO,
 CB.GROUP_ID,
 YEAR(CB.DATE),
 MONTH(CB.DATE) ORDER BY
 CB.DATE";
-    /*print_r($sql1);
+    print_r($sql1);
     echo '</br></br></br>';
     print_r($sql2);
     echo '</br></br></br>';
     print_r($sql3);
-    exit;*/
+    exit;
 //    if ($stmt = $conn -> query($select_sql)) {
     if(true){
         $first_name_en = 'Achiraya';
@@ -213,32 +199,8 @@ CB.DATE";
                 $arrX = [];
 //                print_r($result3->num_rows);
 //                exit;
-                $tM = 0+$month1;
-                $tY = 0+$year1;
-                $tM2 = $tM;
-                $tY2 = $tY;
-//                var_dump($tM);
-//                var_dump($tY);
-//                exit;
-                for($i = 0;$i<$diff;$i++){
-                    if($i+$tM>12) {
-                        $tY2 = $tY+((int)(($i+$tM)/12));
-                        $tM2 = ($tM + $i) - 12;
-                    }else{
-                        $tM2 = $tM+$i;
-                    }
-                    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 1, $tM2);
-                    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, 1, $tY2);
-                    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 2, 'Lesson');
-                    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, 2, 'Bath');
-//                    $arrX[$row_data[0]]=PHPExcel_Cell::stringFromColumnIndex($colN-2);
-//                    $arrX[$row_data[0].'_2']=PHPExcel_Cell::stringFromColumnIndex($colN-1);
-                    $colN++;
-                    $colN++;
-                }
-
                 /*$result3 set column header*/
-                /*while($row_data = $result3->fetch_array(MYSQLI_NUM)) {
+                while($row_data = $result3->fetch_array(MYSQLI_NUM)) {
                     $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 1, $row_data[1]);
                     $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, 1, $row_data[2]);
                     $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 2, 'Lesson');
@@ -248,13 +210,13 @@ CB.DATE";
                     $arrX[$row_data[0].'_2']=PHPExcel_Cell::stringFromColumnIndex($colN-1);
                     $colN++;
                     $colN++;
-                }*/
+                }
 
 //                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 1, $row_data[1]);
 //                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, 1, $row_data[2]);
 
                 $str = PHPExcel_Cell::stringFromColumnIndex($colN-2).'1:'.PHPExcel_Cell::stringFromColumnIndex($colN-1).'1';
-//                $objPHPExcel->getActiveSheet()->mergeCells($str);
+                $objPHPExcel->getActiveSheet()->mergeCells($str);
                 $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 1, 'Selected Month');
 //                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 1, $row_data[1]);
                 $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, 2, 'Lesson');
@@ -302,7 +264,7 @@ CB.DATE";
                     $flagRemain = false;
                     $sumLesson=0;$sumAmount=0;
                     $sumBoughtLesson=0;$sumBoughtAmount=0;
-                    /*while($row2 = $result2->fetch_array(MYSQLI_NUM)) {
+                    while($row2 = $result2->fetch_array(MYSQLI_NUM)) {
                         if($row2['0']==$row['6']&&$row2['4']==$row['10']){
                             $objPHPExcel->getActiveSheet()->SetCellValue($arrX[$row2['3'].'_'.$row2['2']].$rowCount,$row2['1']);
                             $objPHPExcel->getActiveSheet()->SetCellValue($arrX[$row2['3'].'_'.$row2['2'].'_2'].$rowCount,($row['9']*$row2['1']));
@@ -324,7 +286,7 @@ CB.DATE";
                                 $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount, $sumBoughtAmount);
                             }
                         }
-                    }*/
+                    }
                     $objPHPExcel->getActiveSheet()->getStyle('N'.$rowCount.':'.$lastColumn.$rowCount)->applyFromArray($styleVer);
                     $objPHPExcel->getActiveSheet()->getStyle('N'.$rowCount.':'.$lastColumn.$rowCount)->applyFromArray($styleArray);
                     mysqli_data_seek($result2, 0);
