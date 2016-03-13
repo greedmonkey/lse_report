@@ -59,7 +59,8 @@ CPA.RECEIPT_NO,
 Count(CB.ID) AS CLASS_PER_MONTH,
 YEAR(CB.DATE),
 MONTH(CB.DATE),
-CB.GROUP_ID
+CB.GROUP_ID,
+DATE_FORMAT(CB.DATE,'%c_%Y')
 FROM
 client_payment_amount AS CPA
 LEFT JOIN client AS C ON CPA.CLIENT_ID = C.ID
@@ -199,7 +200,10 @@ CB.DATE";
                     )
                 );
 
-                $lastColumn = PHPExcel_Cell::stringFromColumnIndex(($result->field_count-1)+($result3->num_rows*2)+(3*2)-1);
+//                $lastColumn = PHPExcel_Cell::stringFromColumnIndex(($result->field_count-1)+($result3->num_rows*2)+(3*2)-1);
+                $lastColumn = PHPExcel_Cell::stringFromColumnIndex(15+($diff*2)+3);
+//                print_r($lastColumn);
+//                exit;
                 $objPHPExcel->getActiveSheet()->getStyle('A1:'.$lastColumn.'1')->getFont()->setBold(true);
                 $objPHPExcel->getActiveSheet()->getStyle('A2:'.$lastColumn.'2')->getFont()->setBold(true);
                 $objPHPExcel->getActiveSheet()->getStyle('A1:'.$lastColumn.'1')->applyFromArray($style);
@@ -309,15 +313,71 @@ CB.DATE";
                     $sumLesson=0;$sumAmount=0;
                     $sumBoughtLesson=0;$sumBoughtAmount=0;
 
-
+//                    echo PHPExcel_Cell::stringFromColumnIndex($colN-2).'</br>';
                     while($row2 = $result2->fetch_array(MYSQLI_NUM)) {
                         if($row2['0']==$row['6']&&$row2['4']==$row['10']){
 
-                                if(array_key_exists($row2['3'].'_'.$row2['2'], $arrX)){
+/*                                if(array_key_exists($row2['5'], $arrX)){
                                     $objPHPExcel->getActiveSheet()->SetCellValue($arrX[$row2['3'].'_'.$row2['2']].$rowCount,$row2['1']);
                                     $objPHPExcel->getActiveSheet()->SetCellValue($arrX[$row2['3'].'_'.$row2['2'].'_2'].$rowCount,($row['9']*$row2['1']));
-                                }
+                                }*/
+                            $objPHPExcel->getActiveSheet()->SetCellValue($arrX[$row2['5']].$rowCount,$row2['1']);
+                            $objPHPExcel->getActiveSheet()->SetCellValue($arrX[$row2['5'].'_2'].$rowCount,($row['9']*$row2['1']));
+                            //Error if $row2['3'].'_'.$row2['2'] (3_2016 on data)
+                            //maybe fix with (now date > db_date)
 
+                            $isNowDate = compareDate($row2['5'],$dateX);
+                            if($isNowDate==-1){
+                                $sumBoughtLesson+=$row2['1'];
+                                $sumBoughtAmount+=($row['9']*$row2['1']);
+                                $objPHPExcel->getActiveSheet()->SetCellValue('N'.$rowCount, $sumBoughtLesson);
+                                $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount, $sumBoughtAmount);
+//                                $objPHPExcel->getActiveSheet()->getStyle('A'.$rowCount)->applyFromArray($styleArray);
+                            }else if($isNowDate == 0){
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-2, $rowCount, $row2['1']);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-1, $rowCount, ($row['9']*$row2['1']));
+//                                $objPHPExcel->getActiveSheet()->getStyle('A'.$rowCount)->applyFromArray($styleArray);
+                            }else if($isNowDate == 1){
+                                $sumLesson+=$row2['1'];
+                                $sumAmount+=($row['9']*$row2['1']);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN, $rowCount, $sumLesson);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN+1, $rowCount, $sumAmount);
+//                                $objPHPExcel->getActiveSheet()->getStyle('A'.$rowCount)->applyFromArray($styleArray);
+                            }
+                            /*if($row2['5'] < $dateX){
+                                //Bougth
+                                $sumBoughtLesson+=$row2['1'];
+                                $sumBoughtAmount+=($row['9']*$row2['1']);
+                                $objPHPExcel->getActiveSheet()->SetCellValue('N'.$rowCount, $sumBoughtLesson);
+                                $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount, $sumBoughtAmount);
+                            }else if($row2['3'].'_'.$row2['2'] == $dateX){
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-2, $rowCount, $row2['1']);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-1, $rowCount, ($row['9']*$row2['1']));
+                                $objPHPExcel->getActiveSheet()->getStyle('A'.$rowCount)->applyFromArray($styleArray);
+                            }else if($row2['3'].'_'.$row2['2'] > $dateX){
+                                $sumLesson+=$row2['1'];
+                                $sumAmount+=($row['9']*$row2['1']);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-2, $rowCount, $sumLesson);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-1, $rowCount, $sumAmount);
+                            }*/
+
+                            /*if($dateX==$row2['3'].'_'.$row2['2']){
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-2, $rowCount, $row2['1']);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-1, $rowCount, ($row['9']*$row2['1']));
+                                $objPHPExcel->getActiveSheet()->getStyle('A'.$rowCount)->applyFromArray($styleArray);
+                                $flagRemain = true;
+                            }
+                            if($flagRemain){
+                                $sumLesson+=$row2['1'];
+                                $sumAmount+=($row['9']*$row2['1']);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-2, $rowCount, $sumLesson);
+                                $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow($colN-1, $rowCount, $sumAmount);
+                            }else{
+                                $sumBoughtLesson+=$row2['1'];
+                                $sumBoughtAmount+=($row['9']*$row2['1']);
+                                $objPHPExcel->getActiveSheet()->SetCellValue('N'.$rowCount, $sumBoughtLesson);
+                                $objPHPExcel->getActiveSheet()->SetCellValue('O'.$rowCount, $sumBoughtAmount);
+                            }
                             /*$objPHPExcel->getActiveSheet()->SetCellValue($arrX[$row2['3'].'_'.$row2['2']].$rowCount,$row2['1']);
                             $objPHPExcel->getActiveSheet()->SetCellValue($arrX[$row2['3'].'_'.$row2['2'].'_2'].$rowCount,($row['9']*$row2['1']));
                             if($dateX==$row2['3'].'_'.$row2['2']){
@@ -340,7 +400,8 @@ CB.DATE";
 
                         }
                     }
-
+//                    echo PHPExcel_Cell::stringFromColumnIndex($colN).'</br>';
+//                    exit;
 
                     $objPHPExcel->getActiveSheet()->getStyle('N'.$rowCount.':'.$lastColumn.$rowCount)->applyFromArray($styleVer);
                     $objPHPExcel->getActiveSheet()->getStyle('N'.$rowCount.':'.$lastColumn.$rowCount)->applyFromArray($styleArray);
@@ -381,4 +442,20 @@ CB.DATE";
 }else {
     echo $error_database_connection;
 }
-?>===
+function compareDate($date1,$date2) {
+    $arrDate1 = explode("_",$date1);
+    $arrDate2 = explode("_",$date2);
+    $timStmp1 = mktime(0,0,0,$arrDate1[0],1,$arrDate1[1]);
+    $timStmp2 = mktime(0,0,0,$arrDate2[0],1,$arrDate2[1]);
+    $r = null;
+    if ($timStmp1 == $timStmp2) {
+        $r = 0;
+    } else if ($timStmp1 > $timStmp2) {
+        $r = 1;
+
+    } else if ($timStmp1 < $timStmp2) {
+        $r = -1;
+    }
+    return $r;
+}
+?>
