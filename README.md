@@ -1,4 +1,4 @@
-# lse_report (freelance)
+# lse_report
 1. Using PHPExcel to excel report.
 2. Using NaviCat for design Database.
 3. Using PHPStorm for developing.
